@@ -1,0 +1,92 @@
+package pooli
+
+import (
+	"context"
+	"math"
+	"sync"
+)
+
+type Pool struct {
+	ctx context.Context
+
+	goroutines []*Goroutine
+	pipe       chan Task
+
+	m *sync.RWMutex
+}
+
+func Open(goroutines int) *Pool {
+	ctx := context.Background()
+	pipe := make(chan Task)
+
+	var grs []*Goroutine
+	for i := 0; i < goroutines; i++ {
+		g := NewGoroutine(ctx, pipe)
+
+		grs = append(grs, g)
+	}
+
+	return &Pool{
+		ctx:        ctx,
+		goroutines: grs,
+		pipe:       pipe,
+		m:          new(sync.RWMutex),
+	}
+}
+
+func (p *Pool) SendTask(task Task) {
+	p.pipe <- task
+}
+
+func (p *Pool) Start() {
+	go func() {
+		for _, goroutine := range p.goroutines {
+			goroutine.Start()
+		}
+	}()
+}
+
+func (p *Pool) SetGoroutines(n int) {
+	if len(p.goroutines) == n {
+		return
+	}
+
+	n = len(p.goroutines) - n
+	if n > 0 {
+		for i := 0; i < n; i++ {
+			if len(p.goroutines) > 0 {
+				g := p.goroutines[0]
+				p.RemoveGoroutine(g)
+				go g.Kill()
+			}
+		}
+	} else {
+		n = int(math.Abs(float64(n)))
+		for i := 0; i < n; i++ {
+			g := NewGoroutine(p.ctx, p.pipe)
+			g.Start()
+			p.goroutines = append(p.goroutines, g)
+		}
+	}
+}
+
+func (p *Pool) LenGoroutines() int {
+	return len(p.goroutines)
+}
+
+func (p *Pool) RemoveGoroutine(g *Goroutine) {
+	for i, gr := range p.goroutines {
+		if gr != g {
+			continue
+		}
+
+		p.goroutines = append(p.goroutines[:i], p.goroutines[i+1:]...)
+	}
+}
+
+func (p *Pool) Close() {
+	for _, g := range p.goroutines {
+		p.RemoveGoroutine(g)
+		go g.Kill()
+	}
+}
