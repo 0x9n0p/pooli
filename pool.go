@@ -10,27 +10,16 @@ type Pool struct {
 
 	goroutines []*Goroutine
 	pipe       chan Task
-
-	// m *sync.RWMutex
 }
 
-func Open(goroutines int) *Pool {
-	ctx := context.Background()
-	pipe := make(chan Task)
-
-	var grs []*Goroutine
-	for i := 0; i < goroutines; i++ {
-		g := NewGoroutine(ctx, pipe)
-
-		grs = append(grs, g)
+func Open(ctx context.Context, config Config) *Pool {
+	p := &Pool{
+		ctx: ctx,
 	}
 
-	return &Pool{
-		ctx:        ctx,
-		goroutines: grs,
-		pipe:       pipe,
-		// m:          new(sync.RWMutex),
-	}
+	setupConfig(config, p)
+
+	return p
 }
 
 func (p *Pool) SendTask(task Task) {

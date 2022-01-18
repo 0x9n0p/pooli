@@ -2,7 +2,10 @@
 Worker pool with dynamic size
 
 ```go
-	p := pooli.Open(5)
+	p := pooli.Open(context.Background(), pooli.Config{
+		Goroutines: 5,
+		Pipe:       make(chan pooli.Task),
+	})
 	p.Start()
 
 	p.SendTask(pooli.NewTask(func(ctx context.Context) error {

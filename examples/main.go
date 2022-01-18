@@ -9,7 +9,10 @@ import (
 )
 
 func main() {
-	p := pooli.Open(5)
+	p := pooli.Open(context.Background(), pooli.Config{
+		Goroutines: 5,
+		Pipe:       make(chan pooli.Task),
+	})
 	p.Start()
 
 	for i := 0; i < 1000; i++ {
