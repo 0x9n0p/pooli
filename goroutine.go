@@ -40,7 +40,7 @@ func (g *Goroutine) Start() {
 				return
 			case t := <-g.Pipe:
 				g.SetStatus(Progress)
-				executeTask(g.ctx, t)
+				ExecuteTask(g.ctx, t)
 				g.SetStatus(Idle)
 			}
 		}
@@ -62,20 +62,4 @@ func (g Goroutine) Status() Status {
 
 func (g *Goroutine) Kill() {
 	g.cnl()
-}
-
-func executeTask(ctx context.Context, task Task) {
-	err := task.execute(ctx)
-	if err == nil {
-		if task.success != nil {
-			task.success()
-		}
-	} else {
-		if task.fail != nil {
-			task.fail(err)
-		}
-	}
-	if task.final != nil {
-		task.final()
-	}
 }

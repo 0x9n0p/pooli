@@ -3,7 +3,6 @@ package pooli
 import (
 	"context"
 	"math"
-	"sync"
 )
 
 type Pool struct {
@@ -12,7 +11,7 @@ type Pool struct {
 	goroutines []*Goroutine
 	pipe       chan Task
 
-	m *sync.RWMutex
+	// m *sync.RWMutex
 }
 
 func Open(goroutines int) *Pool {
@@ -30,7 +29,7 @@ func Open(goroutines int) *Pool {
 		ctx:        ctx,
 		goroutines: grs,
 		pipe:       pipe,
-		m:          new(sync.RWMutex),
+		// m:          new(sync.RWMutex),
 	}
 }
 
@@ -64,14 +63,22 @@ func (p *Pool) SetGoroutines(n int) {
 		n = int(math.Abs(float64(n)))
 		for i := 0; i < n; i++ {
 			g := NewGoroutine(p.ctx, p.pipe)
-			g.Start()
-			p.goroutines = append(p.goroutines, g)
+			p.AddGoroutine(g)
 		}
 	}
 }
 
-func (p *Pool) LenGoroutines() int {
+func (p *Pool) Len() int {
 	return len(p.goroutines)
+}
+
+func (p *Pool) Goroutines() []*Goroutine {
+	return p.goroutines
+}
+
+func (p *Pool) AddGoroutine(g *Goroutine) {
+	g.Start()
+	p.goroutines = append(p.goroutines, g)
 }
 
 func (p *Pool) RemoveGoroutine(g *Goroutine) {
@@ -80,6 +87,7 @@ func (p *Pool) RemoveGoroutine(g *Goroutine) {
 			continue
 		}
 
+		gr.cnl()
 		p.goroutines = append(p.goroutines[:i], p.goroutines[i+1:]...)
 	}
 }

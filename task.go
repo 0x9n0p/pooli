@@ -27,3 +27,19 @@ func (t Task) Final(f func()) Task {
 	t.final = f
 	return t
 }
+
+func ExecuteTask(ctx context.Context, task Task) {
+	err := task.execute(ctx)
+	if err == nil {
+		if task.success != nil {
+			task.success()
+		}
+	} else {
+		if task.fail != nil {
+			task.fail(err)
+		}
+	}
+	if task.final != nil {
+		task.final()
+	}
+}
