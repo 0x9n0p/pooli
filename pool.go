@@ -2,7 +2,6 @@ package pooli
 
 import (
 	"context"
-	"math"
 )
 
 type Pool struct {
@@ -49,8 +48,7 @@ func (p *Pool) SetGoroutines(n int) {
 			}
 		}
 	} else {
-		n = int(math.Abs(float64(n)))
-		for i := 0; i < n; i++ {
+		for i := n; i < 0; i++ {
 			g := NewGoroutine(p.ctx, p.pipe)
 			p.AddGoroutine(g)
 		}
