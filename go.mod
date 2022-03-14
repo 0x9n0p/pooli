@@ -1,3 +1,3 @@
-module github.com/tooghi/pooli
+module github.com/sudoamin/pooli
 
 go 1.17
