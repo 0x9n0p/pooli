@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sudoamin/pooli"
+	"github.com/0x9n0p/pooli"
 )
 
 func main() {
